@@ -22,7 +22,7 @@ O projeto constrói a **Camada de Sustentação, Confiabilidade, Observabilidade
 * **MLflow Tracking & Model Registry UI:** [https://mlflow.credit.cloud-ip.cc](https://mlflow.credit.cloud-ip.cc)
 * **Grafana Dashboard (11 Painéis em Tempo Real):** [https://grafana.credit.cloud-ip.cc](https://grafana.credit.cloud-ip.cc)
 * **Prometheus Time-Series Server:** [https://prometheus.credit.cloud-ip.cc](https://prometheus.credit.cloud-ip.cc)
-* **Vídeo de Apresentação (Método STAR — YouTube):** *(inserir link após gravação)*
+* **Vídeo de Apresentação (Método STAR — YouTube):** https://www.youtube.com/watch?v=7yizKUNibr8
 
 **Integrantes do Grupo 3 (Turma 9MLET):**
 * **Bruno Machado Abreu** (RM372965)
@@ -311,16 +311,3 @@ make lint
 # 3. Executar a suíte completa de testes com relatório de cobertura (meta >= 70%, atual = 98%)
 make test
 ```
-
----
-
-## 9. Roteiro do Vídeo de Apresentação (Método STAR — ≤ 5 min)
-
-* **Situation (0:00 – 0:50):** Contextualização da fintech de concessão de crédito cujo modelo de *Credit Scoring* passa a sofrer degradação silenciosa em produção devido ao choque inflacionário, alta de juros e mudança no perfil dos tomadores.
-* **Task (0:50 – 1:30):** Apresentação das 4 missões técnicas da Fase 4: (1) barrar dados corrompidos na porta de entrada com contratos formais; (2) simular e diagnosticar estatisticamente o Data Drift e Concept Drift; (3) centralizar observabilidade de pipelines e modelos; e (4) garantir conformidade com a LGPD (*Privacy by Design*) e análise causal.
-* **Action (1:30 – 3:30):** Demonstração prática do código e da arquitetura:
-  * Execução do `DataContractValidator` (Pandera `lazy=True`) bloqueando propostas com idade $\le 18$, renda nula e IDs duplicados;
-  * Simulação do cenário `severe_stagflation` e abertura do relatório HTML do **Evidently AI** e do painel executivo mostrando $\text{PSI} > 0.25$, $p\text{-valor KS} < 10^{-6}$ e alarme **CUSUM**;
-  * Exibição do **MLflow UI** (com assinatura do modelo e artefatos HTML anexados) e do **Grafana** (11 painéis em tempo real);
-  * Demonstração do `PrivacyGuard` (pseudonimização SHA-256 de CPF, generalização de CEP, base legal Art. 7º X / Art. 20º e DAG causal).
-* **Result (3:30 – 4:45):** Consolidação dos resultados: 100% das anomalias de contrato interceptadas antes da inferência, detecção imediata do gap de **48 p.p.** de risco subestimado por Concept Drift, **98% de cobertura de testes** no CI/CD e conformidade plena com a LGPD.

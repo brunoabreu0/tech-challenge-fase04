@@ -21,7 +21,27 @@ services:
       interval: 20s
       timeout: 10s
       retries: 5
-      start_period: 25s
+      start_period: 30s
+    restart: unless-stopped
+
+  evidently:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: credit-guard-evidently
+    command: >
+      evidently ui
+      --workspace /app/reports/evidently_workspace
+      --host 0.0.0.0
+      --port 8085
+      --secret ${EVIDENTLY_SECRET:-fiap-9mlet-grupo03-readonly-lock}
+    ports:
+      - "8085:8085"
+    volumes:
+      - credit_reports:/app/reports
+    depends_on:
+      api:
+        condition: service_healthy
     restart: unless-stopped
 
   mlflow:
@@ -58,7 +78,6 @@ services:
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
-      - "--web.enable-lifecycle"
     depends_on:
       api:
         condition: service_healthy
@@ -70,10 +89,14 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=${GF_ADMIN_USER:-admin_disabled}
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_ADMIN_PASSWORD:-9mlet_G03_vErY_sTrOnG_pAsS_998877}
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+      - GF_AUTH_BASIC_ENABLED=false
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_USERS_ALLOW_ORG_CREATE=false
       - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/var/lib/grafana/dashboards/credit_drift_dashboard.json
     volumes:
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro

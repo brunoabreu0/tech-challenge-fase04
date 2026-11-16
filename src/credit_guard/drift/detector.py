@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 from evidently import Report
 from evidently.presets import DataDriftPreset
+from evidently.ui.workspace import Workspace
 from pydantic import BaseModel, ConfigDict, Field
 from scipy import stats
 
@@ -422,7 +423,10 @@ class DriftDetector:
                 classifier.predict_proba(production_df), 4
             )
 
-        evidently_report = Report([DataDriftPreset()])
+        evidently_report = Report(
+            [DataDriftPreset()],
+            tags=[scenario_name, "credit-scoring", "fase04"],
+        )
         snapshot = evidently_report.run(
             current_data=prod_sub,
             reference_data=ref_sub,
@@ -432,6 +436,22 @@ class DriftDetector:
         evidently_json_path = target_dir / f"evidently_snapshot_{scenario_name}.json"
         snapshot.save_html(str(html_path))
         snapshot.save_json(str(evidently_json_path))
+
+        # Registra o snapshot no Workspace oficial do Evidently UI (`evidently ui`)
+        ws_dir = target_dir / "evidently_workspace"
+        ws = Workspace.create(str(ws_dir))
+        project_name = "CreditGuard — Credit Scoring Drift & Quality (Grupo 3)"
+        existing_projects = ws.search_project(project_name)
+        if existing_projects:
+            project = existing_projects[0]
+        else:
+            project = ws.create_project(project_name)
+            project.description = (
+                "Monitoramento Contínuo de Data Drift (PSI, KS, Wasserstein) "
+                "e Concept Drift — FIAP Pós-Tech 9MLET (Fase 4 - Grupo 3)"
+            )
+            project.save()
+        ws.add_run(project.id, snapshot, include_data=False)
 
         summary = self.analyze(
             reference_df=reference_df,

@@ -21,6 +21,14 @@ resource "aws_security_group" "credit_guard" {
   }
 
   ingress {
+    from_port   = 8085
+    to_port     = 8085
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Evidently AI Official UI"
+  }
+
+  ingress {
     from_port   = 5000
     to_port     = 5000
     protocol    = "tcp"

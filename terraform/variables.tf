@@ -19,7 +19,7 @@ variable "instance_type" {
 variable "dockerhub_image" {
   description = "Imagem Docker Hub da API de observabilidade e drift"
   type        = string
-  default     = "brunoabreu0/credit-guard-api:latest"
+  default     = "techchallengefase02/credit-guard-api:latest"
 }
 
 variable "allowed_countries" {

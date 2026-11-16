@@ -1,6 +1,6 @@
 services:
   api:
-    image: ${DOCKERHUB_IMAGE:-brunoabreu0/credit-guard-api:latest}
+    image: ${DOCKERHUB_IMAGE:-techchallengefase02/credit-guard-api:latest}
     container_name: credit-guard-api
     ports:
       - "8000:8000"
@@ -23,7 +23,7 @@ services:
     restart: always
 
   mlflow:
-    image: ${DOCKERHUB_IMAGE:-brunoabreu0/credit-guard-api:latest}
+    image: ${DOCKERHUB_IMAGE:-techchallengefase02/credit-guard-api:latest}
     container_name: credit-guard-mlflow
     command: >
       mlflow server
@@ -76,7 +76,7 @@ services:
     restart: always
 
   traffic-generator:
-    image: ${DOCKERHUB_IMAGE:-brunoabreu0/credit-guard-api:latest}
+    image: ${DOCKERHUB_IMAGE:-techchallengefase02/credit-guard-api:latest}
     container_name: credit-guard-traffic
     command: ["python", "-u", "scripts/generate_traffic.py"]
     environment:

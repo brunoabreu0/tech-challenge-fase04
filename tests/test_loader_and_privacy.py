@@ -5,9 +5,12 @@ from __future__ import annotations
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 from credit_guard.data.loader import (
+    _normalize_kaggle_credit_df,
     compute_true_default_probability,
+    download_kaggle_dataset,
     generate_credit_dataset,
     load_or_create_reference_dataset,
     split_features_and_target,
@@ -64,20 +67,20 @@ def test_load_or_create_reference_dataset_and_preprocessor(tmp_path: Path) -> No
         raw_dir=tmp_path, n_samples=5000, seed=42, sanitize_pii=True
     )
     assert (tmp_path / "credit_reference.csv").exists()
-    assert len(df1) == 5000
+    assert len(df1) >= 5000
     assert "cpf" not in df1.columns
 
     # Segunda chamada lê do CSV já existente
     df2 = load_or_create_reference_dataset(
         raw_dir=tmp_path, n_samples=5000, seed=42, sanitize_pii=True
     )
-    assert len(df2) == 5000
+    assert len(df2) == len(df1)
 
     x, y = split_features_and_target(df1)
     pipeline = build_preprocessing_pipeline()
     transformed = pipeline.fit_transform(x)
-    assert transformed.shape[0] == 5000
-    assert len(y) == 5000
+    assert transformed.shape[0] == len(df1)
+    assert len(y) == len(df1)
 
 
 def test_compute_true_default_probability_concept_drift(
@@ -89,3 +92,30 @@ def test_compute_true_default_probability_concept_drift(
         reference_credit_df, macro_stress_bias=0.3, concept_drift_strength=1.0
     )
     assert float(p_drift.mean()) > float(p_base.mean())
+
+
+def test_normalize_kaggle_credit_df_and_fallback(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Testa normalização de dados Kaggle e fallback seguro quando sem credenciais."""
+    sample_kaggle = pd.DataFrame(
+        {
+            "person_age": [25, 34, 45],
+            "person_income": [48000, 82000, 120000],
+            "person_home_ownership": ["RENT", "MORTGAGE", "OWN"],
+            "person_emp_length": [3.0, 8.0, 15.0],
+            "loan_intent": ["EDUCATION", "DEBTCONSOLIDATION", "VENTURE"],
+            "loan_amnt": [10000, 18000, 25000],
+            "loan_int_rate": [11.5, 13.2, 9.8],
+            "loan_percent_income": [0.21, 0.22, 0.21],
+        }
+    )
+    norm_df = _normalize_kaggle_credit_df(sample_kaggle, seed=42)
+    assert len(norm_df) == 3
+    for col in FEATURE_COLUMNS + [TARGET_COLUMN, "cpf"]:
+        assert col in norm_df.columns
+
+    monkeypatch.setattr(
+        "credit_guard.data.loader._resolve_kaggle_credentials", lambda: False
+    )
+    assert download_kaggle_dataset(tmp_path) is False

@@ -7,7 +7,7 @@ RUFF = $(VENV_BIN)/ruff
 UVICORN = $(VENV_BIN)/uvicorn
 
 .PHONY: venv install setup clean lint format test test-cov \
-        validate-data train drift-report mlflow-track pipeline-all \
+        download-data validate-data train drift-report mlflow-track pipeline-all \
         run-api docker-build docker-run compose-up compose-down compose-logs \
         tf-init tf-plan tf-apply tf-destroy
 
@@ -55,6 +55,12 @@ test-cov:
 # --------------------------------------------------------------------------- #
 # Etapas do Tech Challenge Fase 4                                             #
 # --------------------------------------------------------------------------- #
+download-data:
+	PYTHONPATH=src $(PYTHON) -c \
+	  "from credit_guard.data.loader import download_kaggle_dataset; from pathlib import Path; \
+	  ok = download_kaggle_dataset(Path('data/raw')); \
+	  print('Kaggle download:', 'sucesso ✓' if ok else 'fallback determinístico local ativo ✓')"
+
 validate-data:
 	PYTHONPATH=src $(PYTHON) scripts/validate_data.py
 

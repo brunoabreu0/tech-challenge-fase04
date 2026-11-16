@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import json
+import logging
+import os
+import zipfile
 from pathlib import Path
 
 import numpy as np
@@ -15,6 +19,127 @@ from credit_guard.data.preprocessor import (
 )
 from credit_guard.data.privacy import PrivacyGuard
 from credit_guard.settings import get_settings
+
+logger = logging.getLogger(__name__)
+
+_KAGGLE_DATASET = "laotse/credit-risk-dataset"
+
+
+def _resolve_kaggle_credentials() -> bool:
+    """Resolve credenciais do Kaggle via KAGGLE_API_TOKEN ou ~/.kaggle/kaggle.json."""
+    kaggle_json = Path.home() / ".kaggle" / "kaggle.json"
+    api_token = os.environ.get("KAGGLE_API_TOKEN", "").strip()
+    if api_token:
+        try:
+            kaggle_json.parent.mkdir(parents=True, exist_ok=True)
+            kaggle_json.write_text(json.dumps({"token": api_token}), encoding="utf-8")
+            kaggle_json.chmod(0o600)
+            return True
+        except OSError as exc:
+            logger.warning("Falha ao gravar ~/.kaggle/kaggle.json: %s", exc)
+
+    if os.environ.get("KAGGLE_USERNAME") and os.environ.get("KAGGLE_KEY"):
+        return True
+
+    return kaggle_json.exists()
+
+
+def _normalize_kaggle_credit_df(
+    raw_kaggle: pd.DataFrame, seed: int = 42
+) -> pd.DataFrame:
+    """Normaliza o dataset `laotse/credit-risk-dataset` para o contrato Pandera."""
+    df_k = raw_kaggle.dropna().copy()
+    df_k = df_k[(df_k["person_age"] > 18) & (df_k["person_age"] <= 95)]
+    df_k = df_k[(df_k["person_income"] >= 1000) & (df_k["person_income"] <= 5_000_000)]
+    df_k = df_k[df_k["person_emp_length"] >= 0]
+    df_k = df_k[df_k["person_emp_length"] <= (df_k["person_age"] - 18)].reset_index(
+        drop=True
+    )
+
+    n = len(df_k)
+    rng = np.random.default_rng(seed)
+
+    intent_map = {
+        "DEBTCONSOLIDATION": "DEBT_CONSOLIDATION",
+        "HOMEIMPROVEMENT": "HOME_IMPROVEMENT",
+        "VENTURE": "SMALL_BUSINESS",
+        "EDUCATION": "EDUCATION",
+        "PERSONAL": "PERSONAL",
+        "MEDICAL": "CREDIT_CARD",
+    }
+    ownership_map = {
+        "OWN": "OWN",
+        "MORTGAGE": "MORTGAGE",
+        "RENT": "RENT",
+        "OTHER": "OTHER",
+    }
+
+    base = generate_credit_dataset(n_samples=n, seed=seed, include_pii=True)
+    base["age"] = df_k["person_age"].astype(int).to_numpy()
+    base["annual_income"] = np.round(df_k["person_income"].astype(float).to_numpy(), 2)
+    base["employment_length_years"] = np.round(
+        df_k["person_emp_length"].astype(float).to_numpy(), 1
+    )
+    base["loan_amount"] = np.round(
+        np.clip(df_k["loan_amnt"].astype(float).to_numpy(), 500.0, 500_000.0), 2
+    )
+    base["interest_rate"] = np.round(
+        np.clip(df_k["loan_int_rate"].astype(float).to_numpy(), 1.0, 99.0), 2
+    )
+    base["debt_to_income_ratio"] = np.round(
+        np.clip(df_k["loan_percent_income"].astype(float).to_numpy(), 0.01, 0.98), 4
+    )
+    base["home_ownership"] = (
+        df_k["person_home_ownership"].astype(str).map(ownership_map).fillna("RENT")
+    ).to_numpy()
+    base["loan_purpose"] = (
+        df_k["loan_intent"].astype(str).map(intent_map).fillna("PERSONAL")
+    ).to_numpy()
+    probs = compute_true_default_probability(base)
+    base[TARGET_COLUMN] = (rng.uniform(0.0, 1.0, size=n) < probs).astype(int)
+    return base
+
+
+def download_kaggle_dataset(data_dir: Path, seed: int = 42) -> bool:
+    """Tenta baixar o Credit Risk Dataset do Kaggle (`laotse/credit-risk-dataset`)."""
+    if not _resolve_kaggle_credentials():
+        return False
+
+    try:
+        import kaggle  # type: ignore[import-untyped]
+    except ImportError:
+        logger.info("Pacote 'kaggle' não instalado; usando gerador determinístico.")
+        return False
+
+    try:
+        data_dir = Path(data_dir)
+        data_dir.mkdir(parents=True, exist_ok=True)
+        kaggle.api.authenticate()
+        kaggle.api.dataset_download_files(
+            _KAGGLE_DATASET,
+            path=str(data_dir),
+            unzip=False,
+            quiet=True,
+        )
+        zip_path = data_dir / "credit-risk-dataset.zip"
+        if zip_path.exists():
+            with zipfile.ZipFile(zip_path, "r") as zf:
+                zf.extractall(data_dir)
+            zip_path.unlink()
+
+        raw_csv = data_dir / "credit_risk_dataset.csv"
+        if raw_csv.exists():
+            raw_df = pd.read_csv(raw_csv)
+            normalized = _normalize_kaggle_credit_df(raw_df, seed=seed)
+            normalized.to_csv(data_dir / "credit_reference.csv", index=False)
+            logger.info(
+                "Dataset Kaggle normalizado e salvo (%d linhas).", len(normalized)
+            )
+            return True
+        return False
+    except Exception as exc:
+        logger.warning("Download do Kaggle indisponível (%s); usando fallback.", exc)
+        return False
 
 
 def _sigmoid(x: np.ndarray) -> np.ndarray:
@@ -230,6 +355,9 @@ def load_or_create_reference_dataset(
     random_seed = seed if seed is not None else settings.random_seed
 
     csv_path = target_dir / "credit_reference.csv"
+    if not csv_path.exists():
+        download_kaggle_dataset(target_dir, seed=random_seed)
+
     if csv_path.exists():
         df = pd.read_csv(csv_path)
     else:

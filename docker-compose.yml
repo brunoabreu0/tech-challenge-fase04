@@ -57,6 +57,7 @@ services:
       --port 5000
       --workers 1
       --allowed-hosts "*"
+      --cors-allowed-origins "https://mlflow.credit.cloud-ip.cc,http://localhost:5000,http://127.0.0.1:5000"
     ports:
       - "5000:5000"
     volumes:

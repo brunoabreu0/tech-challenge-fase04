@@ -89,6 +89,10 @@ jobs:
     needs: test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
+    env:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -96,32 +100,33 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to Docker Hub (com retry resiliente)
-        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build Docker Image (and Push if Docker Hub secrets configured)
         run: |
+          if [ -z "$DOCKERHUB_USERNAME" ] || [ -z "$DOCKERHUB_TOKEN" ]; then
+            echo "ℹ️ Secrets DOCKERHUB_USERNAME/DOCKERHUB_TOKEN não configurados; validando build local da imagem Docker..."
+            docker build -t credit-guard-api:latest .
+            echo "✅ Imagem Docker credit-guard-api:latest construída com sucesso!"
+            exit 0
+          fi
+
           for i in 1 2 3 4 5; do
             echo "Tentativa $i: autenticando no Docker Hub..."
             if echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin; then
               echo "✅ Autenticado com sucesso no Docker Hub."
-              exit 0
+              break
+            fi
+            if [ "$i" -eq 5 ]; then
+              echo "❌ Falha ao autenticar no Docker Hub após 5 tentativas."
+              exit 1
             fi
             sleep $((i * 5))
           done
-          exit 1
 
-      - name: Build and Push Docker Image
-        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/credit-guard-api:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/credit-guard-api:${{ github.sha }}
+          docker buildx build \
+            --push \
+            -t "${DOCKERHUB_USERNAME}/credit-guard-api:latest" \
+            -t "${DOCKERHUB_USERNAME}/credit-guard-api:${GITHUB_SHA}" \
+            .
 
   # ---------------------------------------------------------------------------
   # Job 4: Continuous Deployment (EC2 via AWS SSM)
@@ -130,16 +135,23 @@ jobs:
     name: Continuous Deployment (AWS SSM)
     needs: build
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.AWS_ACCESS_KEY_ID != ''
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: sa-east-1
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
     steps:
       - name: Deploy via AWS Systems Manager (SSM)
         run: |
+          if [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
+            echo "ℹ️ Secrets AWS não configurados no repositório. Pulando deploy SSM."
+            exit 0
+          fi
+
           INSTANCE_ID=$(aws ec2 describe-instances \
             --region sa-east-1 \
             --filters "Name=tag:Name,Values=*credit-guard*api-server,credit-guard-fase04-api-server" "Name=instance-state-name,Values=running" \
@@ -160,9 +172,6 @@ jobs:
               "set -euxo pipefail",
               "cd /opt/credit-guard/repo",
               "git pull --ff-only origin main",
-              "set +x",
-              "if [ -n \"${{ secrets.DOCKERHUB_TOKEN }}\" ]; then echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin >/dev/null 2>&1 || true; fi",
-              "set -x",
               "docker compose -f docker-compose.prod.yml pull || true",
               "docker compose -f docker-compose.prod.yml up -d --remove-orphans",
               "sleep 8",

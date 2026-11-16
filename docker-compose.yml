@@ -1,0 +1,104 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: credit-guard-api
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=development
+      - LOG_LEVEL=INFO
+      - RANDOM_SEED=42
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - MLFLOW_EXPERIMENT_NAME=credit-scoring-drift-monitoring
+    volumes:
+      - credit_reports:/app/reports
+      - credit_models:/app/models
+      - credit_data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 25s
+    restart: unless-stopped
+
+  mlflow:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: credit-guard-mlflow
+    command: >
+      mlflow server
+      --backend-store-uri sqlite:////app/reports/mlflow.db
+      --default-artifact-root /app/reports/mlartifacts
+      --host 0.0.0.0
+      --port 5000
+    ports:
+      - "5000:5000"
+    volumes:
+      - credit_reports:/app/reports
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: credit-guard-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-lifecycle"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: credit-guard-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/var/lib/grafana/dashboards/credit_drift_dashboard.json
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  traffic-generator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: credit-guard-traffic
+    command: ["python", "-u", "scripts/generate_traffic.py"]
+    environment:
+      - API_BASE_URL=http://api:8000
+      - TRAFFIC_INTERVAL_SECONDS=3.0
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  credit_reports:
+  credit_models:
+  credit_data:
+  prometheus_data:
+  grafana_data:

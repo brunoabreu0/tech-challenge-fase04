@@ -1,0 +1,284 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": false,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "id": 1,
+      "title": "🚨 Max PSI em Produção (Limiar Crítico >= 0.25)",
+      "type": "stat",
+      "gridPos": { "h": 5, "w": 4, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "max(credit_drift_overall_max_psi{scenario=\"severe_stagflation\"})",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 3,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 0.1 },
+              { "color": "red", "value": 0.25 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "📉 Features com Drift Estatístico Detectado",
+      "type": "stat",
+      "gridPos": { "h": 5, "w": 4, "x": 4, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "max(credit_drift_detected_features_count{scenario=\"severe_stagflation\"})",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 2 },
+              { "color": "red", "value": 4 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "🛡️ Propostas Bloqueadas pelo Gatekeeper Pandera",
+      "type": "stat",
+      "gridPos": { "h": 5, "w": 4, "x": 8, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(credit_data_contract_validations_total{status=\"blocked\"})",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "blue", "value": null },
+              { "color": "orange", "value": 10 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "🎯 ROC-AUC: Referência vs Produção (Concept Drift)",
+      "type": "gauge",
+      "gridPos": { "h": 5, "w": 4, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "credit_concept_drift_roc_auc{scenario=\"severe_stagflation\"}",
+          "legendFormat": "{{dataset_split}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "min": 0.5,
+          "max": 1.0,
+          "decimals": 3,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "orange", "value": 0.72 },
+              { "color": "green", "value": 0.80 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "⚡ Score Detector CUSUM (Mudança de Regime)",
+      "type": "stat",
+      "gridPos": { "h": 5, "w": 4, "x": 16, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "max(credit_concept_drift_cusum_score{scenario=\"severe_stagflation\"})",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 8.0 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "⚖️ LGPD Fairness — Razão de Impacto Adverso (Etário)",
+      "type": "stat",
+      "gridPos": { "h": 5, "w": 4, "x": 20, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "max(credit_lgpd_fairness_disparate_impact_ratio)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 3,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "orange", "value": 0.7 },
+              { "color": "green", "value": 0.8 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 7,
+      "title": "📊 Population Stability Index (PSI) por Variável — Cenário Estagflação Severa",
+      "type": "bargauge",
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sort_desc(credit_drift_feature_psi{scenario=\"severe_stagflation\"})",
+          "legendFormat": "{{feature}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 3,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 0.10 },
+              { "color": "red", "value": 0.25 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "📐 Estatística Kolmogorov-Smirnov (KS) por Variável Numérica",
+      "type": "bargauge",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sort_desc(credit_drift_feature_ks_statistic{scenario=\"severe_stagflation\"})",
+          "legendFormat": "{{feature}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 3,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 0.10 },
+              { "color": "red", "value": 0.20 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 9,
+      "title": "🚫 Violações de Contrato de Dados (Pandera) Interceptadas por Coluna",
+      "type": "bargauge",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 14 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sort_desc(credit_data_contract_violations_by_column_total)",
+          "legendFormat": "{{column}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "orange", "value": null },
+              { "color": "red", "value": 10 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 10,
+      "title": "💳 Decisões de Crédito Emitidas por Faixa de Risco",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 14 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (decision, risk_tier) (credit_model_predictions_total)",
+          "legendFormat": "{{decision}} ({{risk_tier}})",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "title": "📡 Throughput HTTP por Endpoint (req/s) e Latência P95",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 14 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (endpoint, http_status) (rate(credit_api_http_requests_total{endpoint=~\"/predict|/validate|/drift/analyze|/health|/governance/lgpd\"}[5m]))",
+          "legendFormat": "{{endpoint}} (HTTP {{http_status}})",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "tags": ["fiap", "fase04", "drift", "pandera", "evidently", "lgpd"],
+  "templating": { "list": [] },
+  "time": { "from": "now-30m", "to": "now" },
+  "title": "CreditGuard — Observabilidade, Contratos Pandera, Data/Concept Drift & LGPD",
+  "uid": "credit-guard-fase04"
+}

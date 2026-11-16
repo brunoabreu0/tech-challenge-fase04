@@ -103,6 +103,12 @@ resource "aws_instance" "credit_guard" {
 
     systemctl enable amazon-ssm-agent
     systemctl start amazon-ssm-agent
+
+    mkdir -p /opt/credit-guard
+    git clone https://github.com/brunoabreu0/tech-challenge-fase04.git /opt/credit-guard/repo || true
+    cd /opt/credit-guard/repo
+    cp -n .env.example .env || true
+    docker compose up --build -d || true
   EOF
 
   tags = {

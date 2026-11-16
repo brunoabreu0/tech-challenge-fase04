@@ -37,9 +37,8 @@ models/*.joblib
 models/*.pkl
 models/*.onnx
 models/*.json
-reports/*.html
-reports/*.json
-reports/*.yaml
+reports/
+.coverage*
 
 # =============================================================================
 # MLflow

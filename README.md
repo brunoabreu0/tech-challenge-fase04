@@ -16,6 +16,12 @@ O projeto constrói a **Camada de Sustentação, Confiabilidade, Observabilidade
 ## 🔗 Links Oficiais e Autores
 
 * **Repositório GitHub:** [https://github.com/brunoabreu0/tech-challenge-fase04](https://github.com/brunoabreu0/tech-challenge-fase04)
+* **API CreditGuard em Produção (HTTPS + WAF):** [https://api.credit.cloud-ip.cc](https://api.credit.cloud-ip.cc)
+* **Swagger UI (OpenAPI Docs):** [https://api.credit.cloud-ip.cc/docs](https://api.credit.cloud-ip.cc/docs)
+* **Portal Interativo Evidently AI & Drift Observatory:** [https://evidently.credit.cloud-ip.cc](https://evidently.credit.cloud-ip.cc)
+* **MLflow Tracking & Model Registry UI:** [https://mlflow.credit.cloud-ip.cc](https://mlflow.credit.cloud-ip.cc)
+* **Grafana Dashboard (11 Painéis em Tempo Real):** [https://grafana.credit.cloud-ip.cc](https://grafana.credit.cloud-ip.cc)
+* **Prometheus Time-Series Server:** [https://prometheus.credit.cloud-ip.cc](https://prometheus.credit.cloud-ip.cc)
 * **Vídeo de Apresentação (Método STAR — YouTube):** *(inserir link após gravação)*
 
 **Integrantes do Grupo 3 (Turma 9MLET):**

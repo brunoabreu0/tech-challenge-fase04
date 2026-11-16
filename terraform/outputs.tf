@@ -28,9 +28,19 @@ output "prometheus_url" {
   value       = "https://prometheus.${var.base_domain}"
 }
 
+output "evidently_url" {
+  description = "URL do Portal Evidently AI & Drift Observatory (HTTPS via CloudFront)"
+  value       = "https://evidently.${var.base_domain}"
+}
+
 output "cloudfront_api_domain" {
   description = "Domínio CloudFront da API — criar CNAME api.credit.cloud-ip.cc → este valor"
   value       = aws_cloudfront_distribution.api.domain_name
+}
+
+output "cloudfront_evidently_domain" {
+  description = "Domínio CloudFront do Evidently AI — criar CNAME evidently.credit.cloud-ip.cc → este valor"
+  value       = aws_cloudfront_distribution.evidently.domain_name
 }
 
 output "cloudfront_mlflow_domain" {

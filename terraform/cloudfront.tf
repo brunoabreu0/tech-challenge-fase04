@@ -230,3 +230,59 @@ resource "aws_cloudfront_distribution" "prometheus" {
     Project = var.project_name
   }
 }
+
+resource "aws_cloudfront_distribution" "evidently" {
+  enabled     = true
+  aliases     = ["evidently.${var.base_domain}"]
+  web_acl_id  = local.waf_arn
+  price_class = "PriceClass_100"
+  comment     = "Evidently AI & Drift Observatory Portal — Fase 4"
+
+  origin {
+    domain_name = local.ec2_origin_dns
+    origin_id   = local.cf_origin_id
+
+    custom_origin_config {
+      http_port              = 8000
+      https_port             = 443
+      origin_protocol_policy = "http-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
+
+  default_cache_behavior {
+    target_origin_id       = local.cf_origin_id
+    viewer_protocol_policy = "redirect-to-https"
+    allowed_methods        = local.all_methods
+    cached_methods         = local.cached_methods
+    compress               = true
+
+    forwarded_values {
+      query_string = true
+      headers      = ["*"]
+      cookies { forward = "none" }
+    }
+
+    min_ttl     = 0
+    default_ttl = 0
+    max_ttl     = 0
+  }
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "whitelist"
+      locations        = var.allowed_countries
+    }
+  }
+
+  viewer_certificate {
+    acm_certificate_arn      = local.cert_arn
+    ssl_support_method       = "sni-only"
+    minimum_protocol_version = "TLSv1.2_2021"
+  }
+
+  tags = {
+    Name    = "${var.project_name}-cf-evidently"
+    Project = var.project_name
+  }
+}

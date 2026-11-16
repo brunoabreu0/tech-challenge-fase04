@@ -4,12 +4,17 @@ permissions:
   contents: read
 
 on:
+  push:
+    branches: ["main"]
+    paths:
+      - "terraform/**"
+      - ".github/workflows/deploy-infra.yml"
   workflow_dispatch:
     inputs:
       action:
         description: "Ação do Terraform a executar (plan, apply ou destroy)"
         required: true
-        default: "plan"
+        default: "apply"
         type: choice
         options:
           - plan
@@ -18,13 +23,14 @@ on:
 
 jobs:
   terraform:
-    name: Terraform ${{ github.event.inputs.action }}
+    name: Terraform ${{ github.event.inputs.action || 'apply' }}
     runs-on: ubuntu-latest
 
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: sa-east-1
+      TF_ACTION: ${{ github.event.inputs.action || 'apply' }}
 
     steps:
       - name: Checkout Code
@@ -34,6 +40,7 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.9.x"
+          terraform_wrapper: false
 
       - name: Verify AWS Credentials
         run: |
@@ -52,20 +59,20 @@ jobs:
 
       - name: Terraform Plan
         working-directory: terraform
-        if: github.event.inputs.action != 'destroy'
+        if: env.TF_ACTION != 'destroy'
         run: terraform plan -out=tfplan
 
       - name: Terraform Apply
         working-directory: terraform
-        if: github.event.inputs.action == 'apply'
+        if: env.TF_ACTION == 'apply'
         run: |
           terraform apply -auto-approve tfplan
-          echo "### 🚀 Outputs da Infraestrutura AWS" >> $GITHUB_STEP_SUMMARY
+          echo "### 🚀 Outputs da Infraestrutura AWS (CNAMEs para ClouDNS)" >> $GITHUB_STEP_SUMMARY
           echo '```json' >> $GITHUB_STEP_SUMMARY
           terraform output -json >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
       - name: Terraform Destroy
         working-directory: terraform
-        if: github.event.inputs.action == 'destroy'
+        if: env.TF_ACTION == 'destroy'
         run: terraform destroy -auto-approve

@@ -8,8 +8,12 @@ from credit_guard.api.main import app
 
 
 def test_api_health_and_metrics_endpoints() -> None:
-    """Testa /health e /metrics garantindo exposição de Gauges de PSI e Contratos."""
+    """Testa /, /health e /metrics garantindo exposição de Gauges de PSI e Contratos."""
     with TestClient(app) as client:
+        portal_resp = client.get("/evidently")
+        assert portal_resp.status_code == 200
+        assert "Evidently AI & Drift Observatory" in portal_resp.text
+
         health_resp = client.get("/health")
         assert health_resp.status_code == 200
         body = health_resp.json()

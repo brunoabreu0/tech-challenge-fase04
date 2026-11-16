@@ -31,6 +31,7 @@ services:
       --default-artifact-root /app/reports/mlartifacts
       --host 0.0.0.0
       --port 5000
+      --allowed-hosts "*"
     ports:
       - "5000:5000"
     volumes:
@@ -78,10 +79,16 @@ services:
   traffic-generator:
     image: ${DOCKERHUB_IMAGE:-techchallengefase02/credit-guard-api:latest}
     container_name: credit-guard-traffic
-    command: ["python", "-u", "scripts/generate_traffic.py"]
+    command: ["sh", "-c", "python scripts/run_mlflow_tracking.py || true; exec python -u scripts/generate_traffic.py"]
     environment:
       - API_BASE_URL=http://api:8000
       - TRAFFIC_INTERVAL_SECONDS=4.0
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - MLFLOW_EXPERIMENT_NAME=credit-scoring-drift-monitoring
+    volumes:
+      - credit_reports:/app/reports
+      - credit_models:/app/models
+      - credit_data:/app/data
     depends_on:
       api:
         condition: service_healthy

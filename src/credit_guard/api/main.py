@@ -54,6 +54,8 @@ from credit_guard.settings import get_settings
 logger = logging.getLogger(__name__)
 
 _TRACKED_ENDPOINTS: set[str] = {
+    "/",
+    "/evidently",
     "/health",
     "/predict",
     "/validate",
@@ -198,6 +200,92 @@ async def prometheus_http_middleware(request: Request, call_next: Any) -> Respon
             endpoint=normalized_path,
         ).observe(elapsed)
     return response
+
+
+@app.get("/", response_class=HTMLResponse, tags=["Detecção de Drift"])
+@app.get("/evidently", response_class=HTMLResponse, tags=["Detecção de Drift"])
+def evidently_portal_home() -> HTMLResponse:
+    """Portal interativo Evidently AI & Drift (evidently.credit.cloud-ip.cc)."""
+    _ensure_initialized()
+    severe = state.drift_summaries.get("severe_stagflation")
+    max_psi = f"{severe.max_psi:.4f}" if severe else "N/A"
+    drifted = (
+        f"{severe.drifted_features_count}/{severe.total_features_evaluated}"
+        if severe
+        else "N/A"
+    )
+    html = f"""<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<title>Evidently AI & Drift Portal — CreditGuard (Fase 4)</title>
+<style>
+  body {{
+    margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #0f172a; color: #f8fafc;
+    display: flex; flex-direction: column; height: 100vh;
+  }}
+  header {{
+    background: #1e293b; padding: 12px 24px; border-bottom: 1px solid #334155;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px;
+  }}
+  .brand {{ font-size: 18px; font-weight: 700; color: #f8fafc; }}
+  .badges span {{
+    background: #dc2626; color: #fff; padding: 4px 10px; border-radius: 6px;
+    font-size: 12px; font-weight: 600; margin-left: 8px;
+  }}
+  nav {{
+    background: #0f172a; padding: 8px 24px; border-bottom: 1px solid #334155;
+    display: flex; gap: 10px; flex-wrap: wrap;
+  }}
+  nav a {{
+    color: #cbd5e1; text-decoration: none; padding: 8px 14px; border-radius: 6px;
+    background: #1e293b; font-size: 13px; font-weight: 600; border: 1px solid #334155;
+  }}
+  nav a:hover, nav a.active {{
+    background: #ea580c; color: #fff; border-color: #ea580c;
+  }}
+  iframe {{ flex: 1; width: 100%; border: none; background: #fff; }}
+</style>
+<script>
+  function loadView(url, el) {{
+    document.getElementById('viewer').src = url;
+    document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+    el.classList.add('active');
+  }}
+</script>
+</head>
+<body>
+<header>
+  <div class="brand">
+    🔍 Evidently AI & Drift Observatory — CreditGuard (FIAP 9MLET - Grupo 3)
+  </div>
+  <div class="badges">
+    <span>Severidade: CRITICAL</span>
+    <span>Max PSI: {max_psi}</span>
+    <span>Features com Drift: {drifted}</span>
+  </div>
+</header>
+<nav>
+  <a href="#" class="active"
+     onclick="loadView('/drift/report/severe_stagflation', this); return false;">
+    📊 Relatório Evidently AI (Estagflação Severa)
+  </a>
+  <a href="#"
+     onclick="loadView('/drift/report/moderate_inflation', this); return false;">
+    📈 Relatório Evidently AI (Inflação Moderada)
+  </a>
+  <a href="#"
+     onclick="loadView('/drift/dashboard/severe_stagflation', this); return false;">
+    📐 Painel Estatístico (PSI, KS, Wasserstein & CUSUM)
+  </a>
+  <a href="/docs" target="_blank">⚡ Swagger UI (/docs) ↗</a>
+</nav>
+<iframe id="viewer" src="/drift/report/severe_stagflation"></iframe>
+</body>
+</html>"""
+    return HTMLResponse(content=html)
 
 
 @app.get("/health", response_model=HealthResponse, tags=["Monitoramento"])

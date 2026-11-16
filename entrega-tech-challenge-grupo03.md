@@ -32,9 +32,9 @@
 
 ---
 
-## ✅ Checklist de Atendimento aos Critérios de Avaliação da Banca
+## ✅ Matriz de Atendimento aos Requisitos Técnicos
 
-| Critério da Rubrica | Peso | Entrega Realizada no Projeto |
+| Critério Técnico | Peso | Entrega Realizada no Projeto |
 |---|:---:|---|
 | **1. Validação de Dados (Contratos)** | **25%** | Implementado em `src/credit_guard/data/contracts.py` e `scripts/validate_data.py` com **Pandera (`lazy=True`)** contendo **11 regras rígidas** (`age > 18`, `annual_income` sem nulos e dentro de limites, `application_id` sem duplicatas, `credit_score` entre 300 e 850, consistência idade vs. tempo de emprego) + exportação **Data Contract Specification YAML** + bloqueio comprovado de lote corrompido (HTTP 422 na API e status `BLOCKED` no pipeline). |
 | **2. Detecção de Drift** | **25%** | Implementado em `src/credit_guard/drift/simulator.py`, `src/credit_guard/drift/detector.py` e `scripts/run_drift_analysis.py`. Separação estrita entre Dataset de Referência (`6.000 amostras`) e Produção (`3.000 amostras`), simulação de degradação econômica em 6 variáveis + Concept Drift, cálculo de **PSI**, **Kolmogorov-Smirnov (KS)**, **Wasserstein**, **Jensen-Shannon** e **CUSUM**, e geração de relatórios HTML interativos do **Evidently AI**. |

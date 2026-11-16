@@ -95,9 +95,25 @@ resource "aws_instance" "credit_guard" {
   iam_instance_profile   = aws_iam_instance_profile.ec2_ssm.name
   vpc_security_group_ids = [aws_security_group.credit_guard.id]
 
+  root_block_device {
+    volume_size           = 30
+    volume_type           = "gp3"
+    delete_on_termination = true
+  }
+
   user_data = <<-EOF
     #!/bin/bash
     set -euxo pipefail
+
+    # Configura 2GB de Swap para estabilidade extra sob pico de carga
+    if [ ! -f /swapfile ]; then
+      dd if=/dev/zero of=/swapfile bs=1M count=2048
+      chmod 600 /swapfile
+      mkswap /swapfile
+      swapon /swapfile
+      echo '/swapfile swap swap defaults 0 0' >> /etc/fstab
+    fi
+
     yum update -y
     yum install -y docker git
     systemctl enable docker
@@ -116,7 +132,8 @@ resource "aws_instance" "credit_guard" {
     git clone https://github.com/brunoabreu0/tech-challenge-fase04.git /opt/credit-guard/repo || true
     cd /opt/credit-guard/repo
     cp -n .env.example .env || true
-    docker compose up --build -d || true
+    docker compose -f docker-compose.prod.yml pull || true
+    docker compose -f docker-compose.prod.yml up -d || true
   EOF
 
   tags = {

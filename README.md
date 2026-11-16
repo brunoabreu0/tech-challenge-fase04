@@ -33,9 +33,9 @@ O projeto constrói a **Camada de Sustentação, Confiabilidade, Observabilidade
 
 ---
 
-## ⚡ Quick Start para a Banca Avaliadora (≤ 5 Passos)
+## ⚡ Quick Start
 
-### Opção A — Stack Completa via Docker Compose (API + MLflow + Prometheus + Grafana)
+### Opção A — Stack Completa via Docker Compose (API + Evidently UI + MLflow + Prometheus + Grafana)
 
 ```bash
 # 1. Clonar o repositório e entrar na pasta
@@ -64,7 +64,8 @@ curl -X POST http://localhost:8000/predict -H "Content-Type: application/json" \
 | Serviço / Relatório | URL Local | Descrição |
 |---|---|---|
 | **Swagger UI (API Interativa)** | http://localhost:8000/docs | Documentação OpenAPI para testar `/predict`, `/validate`, `/drift/analyze` e `/governance/lgpd` |
-| **Relatório HTML Evidently AI** | http://localhost:8000/drift/report/severe_stagflation | Relatório interativo oficial do **Evidently AI** comparando Referência vs. Produção |
+| **Evidently AI UI Oficial** | http://localhost:8085 | Aplicação web nativa do **Evidently AI** (`evidently ui`) com workspace, projetos e snapshots |
+| **Relatório HTML Evidently AI** | http://localhost:8000/drift/report/severe_stagflation | Relatório HTML standalone do **Evidently AI** comparando Referência vs. Produção |
 | **Painel Executivo de Drift (HTML)** | http://localhost:8000/drift/dashboard/severe_stagflation | Tabela consolidada de **PSI**, **Teste KS**, **Wasserstein**, **JSD** e **Concept Drift (CUSUM)** |
 | **Grafana Dashboard (Auto-provisionado)** | http://localhost:3000 | 11 painéis em tempo real (PSI por feature, bloqueios Pandera, ROC-AUC, CUSUM, LGPD Fairness) |
 | **MLflow Tracking UI** | http://localhost:5000 | Experimentos rastreados, parâmetros, métricas de drift, assinatura do modelo e artefatos HTML |

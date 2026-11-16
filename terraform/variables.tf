@@ -11,9 +11,9 @@ variable "project_name" {
 }
 
 variable "instance_type" {
-  description = "Tipo da instância EC2"
+  description = "Tipo da instância EC2 (t3.medium = 4GB RAM para API + Evidently + MLflow + Prometheus + Grafana)"
   type        = string
-  default     = "t3.small"
+  default     = "t3.medium"
 }
 
 variable "dockerhub_image" {

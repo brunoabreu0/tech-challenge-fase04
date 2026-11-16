@@ -2,7 +2,7 @@
 
 **Curso:** FIAP Pós-Tech — Machine Learning Engineering  
 **Turma:** 9MLET  
-**Grupo:** 118
+**Grupo:** 3
 
 **Autores:**
 * **Bruno Machado Abreu** (RM372965)

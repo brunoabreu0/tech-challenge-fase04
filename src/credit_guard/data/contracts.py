@@ -347,7 +347,7 @@ def export_data_contract_specification(output_path: Path) -> Path:
                 "Contrato formal de qualidade de dados para o pipeline de concessão "
                 "de crédito (Pandera + Pydantic v2 + LGPD Privacy by Design)."
             ),
-            "owner": "ML Engineering Team — Grupo 118 (FIAP 9MLET)",
+            "owner": "ML Engineering Team — Grupo 3 (FIAP 9MLET)",
         },
         "terms": {
             "usage": "Inferência e retreinamento do modelo de risco de crédito",

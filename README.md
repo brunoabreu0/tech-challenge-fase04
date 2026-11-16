@@ -7,7 +7,7 @@
 ![Evidently AI](https://img.shields.io/badge/Drift-Evidently%20AI-orange.svg)
 ![LGPD Compliant](https://img.shields.io/badge/Governance-LGPD%20%26%20PbD-success.svg)
 
-Este repositório contém a entrega oficial do **Tech Challenge — Fase 4** (*Model Monitoring and Security*) da pós-graduação **FIAP Pós-Tech em Machine Learning Engineering (Turma 9MLET — Grupo 118)**.
+Este repositório contém a entrega oficial do **Tech Challenge — Fase 4** (*Model Monitoring and Security*) da pós-graduação **FIAP Pós-Tech em Machine Learning Engineering (Turma 9MLET — Grupo 3)**.
 
 O projeto constrói a **Camada de Sustentação, Confiabilidade, Observabilidade e Governança (LGPD)** para um sistema de **Credit Scoring** em produção em uma fintech, prevenindo a entrada de dados corrompidos via **Contratos de Dados (Pandera)**, diagnosticando a **degradação silenciosa (Data Drift e Concept Drift)** com **Evidently AI**, **PSI**, **Kolmogorov-Smirnov**, **Wasserstein** e **CUSUM**, centralizando logs e telemetria no **MLflow + Prometheus + Grafana** e assegurando conformidade integral com **Privacy by Design & By Default (LGPD)**.
 
@@ -18,7 +18,7 @@ O projeto constrói a **Camada de Sustentação, Confiabilidade, Observabilidade
 * **Repositório GitHub:** [https://github.com/brunoabreu0/tech-challenge-fase04](https://github.com/brunoabreu0/tech-challenge-fase04)
 * **Vídeo de Apresentação (Método STAR — YouTube):** *(inserir link após gravação)*
 
-**Integrantes do Grupo 118 (Turma 9MLET):**
+**Integrantes do Grupo 3 (Turma 9MLET):**
 * **Bruno Machado Abreu** (RM372965)
 * **Renan Prado Gonzalez** (RM374089)
 * **Davi Coene Rosa** (RM371466)
@@ -254,7 +254,7 @@ tech-challenge-fase04/
 ├── README.md                       # Documentação consolidada de arquitetura, drift e governança LGPD
 ├── docker-compose.yml              # Stack local (API + MLflow + Prometheus + Grafana + Traffic Generator)
 ├── docker-compose.prod.yml         # Stack de produção para EC2 AWS
-├── entrega-tech-challenge-grupo118.md
+├── entrega-tech-challenge-grupo03.md
 ├── monitoring/
 │   ├── prometheus.yml              # Configuração de scrape do Prometheus
 │   └── grafana/                    # Provisionamento automático de Datasource e Dashboard (11 painéis)
